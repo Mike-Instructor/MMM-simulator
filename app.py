@@ -258,7 +258,7 @@ st.markdown(
 )
 
 if "budget" not in st.session_state:
-    st.session_state.budget = 1000
+    st.session_state.budget = 2500
 
 # Widget keys must be initialized BEFORE widgets, and then widgets should NOT pass value=
 if "budget_slider" not in st.session_state:
@@ -354,13 +354,13 @@ if st.session_state.axis_budget is None or float(st.session_state.axis_budget) !
 # ============================================================
 
 st.title("Media Mix Allocation")
-st.caption("Allocate budget across Search, Paid Social, and Display. Hardcoded diminishing returns predict sales volume (units).")
+st.caption("Allocate budget across Search, Paid Social, and Display. Predict sales volume (units) and ROAS.")
 
 outer_left, outer_right = st.columns([2.4, 1.1], gap="large")
 
 # ---------------- LEFT: sliders + curves ----------------
 with outer_left:
-    st.subheader("Budget + Allocation")
+    st.subheader("Dashboard (Budget and Channel Allocations)")
 
     st.slider(
         "Total Budget ($)",
@@ -437,7 +437,7 @@ with outer_left:
                 height=300,
                 margin=dict(l=10, r=10, t=45, b=10),
                 xaxis_title="Spend ($)",
-                yaxis=dict(title="Units", range=[0, y_axis_max]),
+                yaxis=dict(title="Units Sold", range=[0, y_axis_max]),
                 showlegend=False,
             )
             st.plotly_chart(fig, use_container_width=True)
