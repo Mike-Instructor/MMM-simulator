@@ -450,7 +450,7 @@ with outer_left:
                     x_best, _ = max_roas_allocation(float(st.session_state.budget))
                     apply_allocation_vector(x_best, force_full_budget=False)
         else:
-            st.caption("Student Version. Robert H. Smith School of Business")
+            st.caption("Student Version. Robert H. Smith School of Business. Questions? e-mail mtrusov@umd.edu")
 
     c1, c2, c3 = st.columns(3, gap="small")
     for col, ch in zip([c1, c2, c3], CHANNELS.keys()):
