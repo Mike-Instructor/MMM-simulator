@@ -66,6 +66,8 @@ EFAULT_SCENARIO = "Classic Diminishing Returns"
 DEFAULT_SCENARIO = "Mixed World"
 CHANNELS = SCENARIOS[DEFAULT_SCENARIO]
 
+STUDENT_LOCKED_BUDGET = 2500
+
 APP_BUDGET_MIN = 500
 APP_BUDGET_MAX = 5000
 
@@ -314,6 +316,10 @@ def apply_query_params_once():
 
 apply_query_params_once()
 
+# If NOT instructor mode → lock the budget
+if not st.session_state.get("show_instructor_tools", False):
+    st.session_state.budget = STUDENT_LOCKED_BUDGET
+    st.session_state["budget_slider"] = STUDENT_LOCKED_BUDGET
 
 if "budget" not in st.session_state:
     st.session_state.budget = 2500
@@ -420,14 +426,18 @@ outer_left, outer_right = st.columns([2.4, 1.1], gap="large")
 with outer_left:
     st.subheader("Dashboard (Budget and Channel Allocations)")
 
+    budget_locked = not st.session_state.get("show_instructor_tools", False)
+
     st.slider(
         "Total Budget ($)",
         min_value=APP_BUDGET_MIN,
         max_value=APP_BUDGET_MAX,
-        step=APP_BUDGET_STEP,  # ✅ $500 increments
+        step=APP_BUDGET_STEP,
         key="budget_slider",
         on_change=on_budget_change,
+        disabled=budget_locked,
     )
+
     st.session_state.budget = int(st.session_state["budget_slider"])
     slider_max = int(st.session_state.budget)
 
