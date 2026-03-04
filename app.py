@@ -62,7 +62,8 @@ SCENARIOS = {
     },
 }
 
-DEFAULT_SCENARIO = "Classic Diminishing Returns"
+EFAULT_SCENARIO = "Classic Diminishing Returns"
+DEFAULT_SCENARIO = "Mixed World"
 CHANNELS = SCENARIOS[DEFAULT_SCENARIO]
 
 APP_BUDGET_MIN = 500
