@@ -21,6 +21,13 @@ HIDE_ROAS_BUTTON = True
 # 5 SCENARIOS (same hill_n across channels within each scenario)
 # ------------------------------------------------------------
 SCENARIOS = {
+
+    "Mixed World": {
+        "Search": {"scale": 820.0, "half_sat": 690.0, "hill_n": 0.45},
+        "Paid Social": {"scale": 490.0, "half_sat": 3000.0, "hill_n": 0.95},
+        "Display": {"scale": 790.0, "half_sat": 1290.0, "hill_n": 0.9},    
+    },
+
     "Spiky World (very steep early lift)": {
         "Search":      {"scale": 680.0, "half_sat": 280.0, "hill_n": 0.55},
         "Paid Social": {"scale": 660.0, "half_sat": 500.0, "hill_n": 0.55},
@@ -257,6 +264,56 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ============================================================
+# ✅ URL QUERY PARAMS (Instructor flag + optional scenario/budget)
+#
+# Usage examples:
+#   ?Instructor               -> show instructor tools (presence-only)
+#   ?Instructor=1             -> show instructor tools (also works)
+#   ?scenario=Smooth%20World%20(gradual%20response)&budget=3000&Instructor
+# ============================================================
+
+def _is_truthy(v) -> bool:
+    if v is None:
+        return False
+    s = str(v).strip().lower()
+    return s in {"1", "true", "yes", "y", "on"}
+
+def apply_query_params_once():
+    qp = st.query_params  # Streamlit's query param interface
+
+    if st.session_state.get("_qp_applied", False):
+        return
+
+    # Presence-only "Instructor" flag:
+    # - If "Instructor" exists in URL at all, enable tools (ignore value).
+    # - Also allow common truthy values.
+    instructor_present = ("Instructor" in qp) or ("instructor" in qp)
+    instructor_truthy = _is_truthy(qp.get("Instructor", None)) or _is_truthy(qp.get("instructor", None))
+    st.session_state.show_instructor_tools = bool(instructor_present or instructor_truthy)
+
+    # Optional scenario override via URL
+    scenario = qp.get("scenario", None)
+    if scenario and scenario in SCENARIOS:
+        st.session_state.scenario_name = scenario
+
+    # Optional budget override via URL
+    budget = qp.get("budget", None)
+    if budget is not None:
+        try:
+            b = int(float(budget))
+            b = max(APP_BUDGET_MIN, min(APP_BUDGET_MAX, b))
+            b = int(round(b / APP_BUDGET_STEP) * APP_BUDGET_STEP)  # snap to step
+            st.session_state.budget = b
+            st.session_state["budget_slider"] = b
+        except ValueError:
+            pass
+
+    st.session_state["_qp_applied"] = True
+
+apply_query_params_once()
+
+
 if "budget" not in st.session_state:
     st.session_state.budget = 2500
 
@@ -375,21 +432,25 @@ with outer_left:
 
     # Instructor tools + scenario selector (hidden in same expander)
     with st.expander("", expanded=False):
-        st.radio(
-            "Curve Scenario",
-            options=list(SCENARIOS.keys()),
-            key="scenario_name",
-            on_change=on_scenario_change,
-        )
+        # Default: hidden. If URL contains ?Instructor (any value), show tools.
+        if st.session_state.get("show_instructor_tools", False):
+            st.radio(
+                "Curve Scenario",
+                options=list(SCENARIOS.keys()),
+                key="scenario_name",
+                on_change=on_scenario_change,
+            )
 
-        if st.button("🛠️"):
-            x_best, _ = max_sales_allocation(float(st.session_state.budget))
-            apply_allocation_vector(x_best, force_full_budget=True)
+            if st.button("🛠️"):
+                x_best, _ = max_sales_allocation(float(st.session_state.budget))
+                apply_allocation_vector(x_best, force_full_budget=True)
 
-        if not HIDE_ROAS_BUTTON:
-            if st.button("🧠 Optimize ROAS"):
-                x_best, _ = max_roas_allocation(float(st.session_state.budget))
-                apply_allocation_vector(x_best, force_full_budget=False)
+            if not HIDE_ROAS_BUTTON:
+                if st.button("🧠 Optimize ROAS"):
+                    x_best, _ = max_roas_allocation(float(st.session_state.budget))
+                    apply_allocation_vector(x_best, force_full_budget=False)
+        else:
+            st.caption("Student Version. Robert H. Smith School of Business")
 
     c1, c2, c3 = st.columns(3, gap="small")
     for col, ch in zip([c1, c2, c3], CHANNELS.keys()):
@@ -499,4 +560,4 @@ with outer_right:
         )
         st.plotly_chart(fig_roas, use_container_width=True)
 
-    st.caption(f"Revenue per unit = ${REVENUE_PER_UNIT:,.2f} (edit `REVENUE_PER_UNIT` in code)")
+    st.caption(f"Revenue per unit = ${REVENUE_PER_UNIT:,.2f}")
